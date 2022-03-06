@@ -3,7 +3,7 @@
 ## Purpose of this analysis:
 Predict whether or not applicants for charity funding will be successful.
 
-Data Preprocessing
+### Data Preprocessing
 
 What variable(s) are considered the target(s) for your model?
 - the IS_SUCCESSFUL variable
@@ -13,7 +13,7 @@ What variable(s) are neither targets nor features, and should be removed from th
 - ID variables, EIN and NAME
 
 
-Compiling, Training, and Evaluating the Model
+### Compiling, Training, and Evaluating the Model
 
 How many neurons, layers, and activation functions did you select for your neural network model, and why?
 - The first model contained 5,741 neurons or params, two hidden layers, and one output layer. The activation functions selected were relu and sigmoid. 
