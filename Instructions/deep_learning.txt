@@ -1,0 +1,157 @@
+# Import our dependencies
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import pandas as pd
+import tensorflow as tf
+
+#  Import and read the charity_data.csv.
+import pandas as pd 
+application_df = pd.read_csv("Resources/charity_data.csv")
+application_df.head()
+
+
+# Drop the non-beneficial ID columns, 'EIN' and 'NAME'.
+#  YOUR CODE GOES HERE
+application_cleaned = application_df.drop(['EIN','NAME'], axis = 1)
+application_cleaned.info()
+
+
+# Determine the number of unique values in each column.
+#  YOUR CODE GOES HERE
+print(application_cleaned.nunique())
+
+
+# Look at APPLICATION_TYPE value counts for binning
+#  YOUR CODE GOES HERE
+app_type_count=application_cleaned['APPLICATION_TYPE'].value_counts()
+#pd.DataFrame(app_type_count).columns =['APPLICATION_TYPE', 'count']
+
+print(app_type_count)
+
+
+# Choose a cutoff value and create a list of application types to be replaced
+# use the variable name `application_types_to_replace`
+#  YOUR CODE GOES HERE
+application_types_to_replace = ['T9', 'T13', 'T12', 'T2', 'T14', 'T25', 'T15', 'T29', 'T17']
+
+# Replace in dataframe
+for app in application_types_to_replace:
+    application_cleaned['APPLICATION_TYPE'] = application_cleaned['APPLICATION_TYPE'].replace(app,"Other")
+
+# Check to make sure binning was successful
+application_cleaned['APPLICATION_TYPE'].value_counts()
+
+
+# Look at CLASSIFICATION value counts for binning
+# YOUR CODE GOES HERE
+app_binning = application_cleaned['CLASSIFICATION'].value_counts()
+print(app_binning)
+
+
+classification_count = pd.DataFrame(application_cleaned['CLASSIFICATION'].value_counts())
+classification_count = classification_count.reset_index(drop=False)
+classification_count.columns=['CLASSIFICATION','count']
+classification_count
+classification_count[classification_count['count']>1]
+
+
+# Choose a cutoff value and create a list of classifications to be replaced
+# use the variable name `classifications_to_replace`
+#  YOUR CODE GOES HERE
+classifications_to_replace = classification_count[classification_count['count']<1883]['CLASSIFICATION']
+classifications_to_replace
+
+# Replace in dataframe
+for cls in classifications_to_replace:
+    application_cleaned['CLASSIFICATION'] = application_cleaned['CLASSIFICATION'].replace(cls,"Other")
+    
+# Check to make sure binning was successful
+application_cleaned['CLASSIFICATION'].value_counts()
+
+
+# Optimize the model by dropping data columns
+application_cleaned = application_cleaned[application_cleaned['STATUS']==0]
+application_cleaned = application_cleaned.drop(['STATUS'], axis = 1)
+
+application_cleaned = application_cleaned[application_cleaned['SPECIAL_CONSIDERATIONS']=="Y"]
+application_cleaned = application_cleaned.drop(['SPECIAL_CONSIDERATIONS'], axis = 1)
+
+application_cleaned.info()
+
+
+# Convert categorical data to numeric with `pd.get_dummies`
+#  YOUR CODE GOES HERE
+application_dummies = pd.get_dummies(application_cleaned)
+application_dummies.info()
+
+
+
+# Split our preprocessed data into our features and target arrays
+#  YOUR CODE GOES HERE
+target = application_dummies['IS_SUCCESSFUL']
+features = application_dummies.drop(['IS_SUCCESSFUL'], axis=1)
+
+
+# Split the preprocessed data into a training and testing dataset
+#  YOUR CODE GOES HERE
+import sklearn as skl
+# Use sklearn to split dataset
+from sklearn.model_selection import train_test_split
+X = features
+y = target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.33, random_state=78)
+
+
+
+# Create a StandardScaler instances
+scaler = StandardScaler()
+
+# Fit the StandardScaler
+X_scaler = scaler.fit(X_train)
+
+# Scale the data
+X_train_scaled = X_scaler.transform(X_train)
+X_test_scaled = X_scaler.transform(X_test)
+
+
+# Define the model - deep neural net, i.e., the number of input features and hidden nodes for each layer.
+#  YOUR CODE GOES HERE
+
+nn_model = tf.keras.models.Sequential()
+
+# First hidden layer
+#  YOUR CODE GOES HERE
+# Add our first Dense layer, including the input layer
+nn_model.add(tf.keras.layers.Dense(units=80, activation="relu", input_shape=(43,)))
+
+# Second hidden layer
+#  YOUR CODE GOES HERE
+nn_model.add(tf.keras.layers.Dense(units=30, activation="relu", input_shape=(43,)))
+
+# Output layer
+#  YOUR CODE GOES HERE
+# Add the output layer that uses a probability activation function
+nn_model.add(tf.keras.layers.Dense(units=1, activation="sigmoid"))
+
+# Check the structure of the model
+nn_model.summary()
+
+
+
+# Compile the model
+# YOUR CODE GOES HERE
+ # Compile the Sequential model together and customize metrics
+nn_model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+
+# Fit the model to the training data
+fit_model = nn_model.fit(X_train_scaled, y_train, epochs=100)
+
+
+
+# Evaluate the model using the test data
+model_loss, model_accuracy = nn_model.evaluate(X_test_scaled,y_test,verbose=2)
+print(f"Loss: {model_loss}, Accuracy: {model_accuracy}")
+
+
+
+application_cleaned.info()
